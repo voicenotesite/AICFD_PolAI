@@ -30,8 +30,13 @@ class DragPredictor3D(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 1)
         )
-
+        for layer in self.layers:
+            if isinstance(layer, nn.Linear):
+                nn.init.xavier_uniform_(layer.weight)
+                nn.init.constant_(layer.bias, 0.01)
     def forward(self, x):
+        if torch.isnan(x).any():
+            return torch.zeros((x.shape[0], 1))
         return self.layers(x)
 
 
@@ -39,6 +44,8 @@ class DragPredictor3D(nn.Module):
 class CFDApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.vertices = np.zeros((0, 3))
+        self.drag = 1.0
         self.init_ui()
         self.init_model()
 
@@ -65,6 +72,22 @@ class CFDApp(QWidget):
         layout.addWidget(self.viewer)
         self.setLayout(layout)
 
+    def load_Stl(self, filename):
+        try:
+            stl_mesh = mesh.Mesh.from_file(filename)
+            self.vertices = stl_mesh.vectors.reshape(-1, 3)
+            self.vertices = self.normalize_vertices(self.vertices)
+            with torch.no_grad():
+                drag = self.model(torch.FloatTensor(self.vertices)).mean().item()
+            self.update_visualization()
+            return False
+
+        except Exception as e:
+            print(f"Błąd ładowania STL: {e}")
+            return False
+    def normalize_vertices(self, vertices):
+        vertices = vertices - vertices.mean(axis=0)
+        return vertices / (np.max(np.linalg.norm(vertices, axis=1)) + 1e-8)
     def init_model(self):
         """Inicjalizacja modelu z zabezpieczeniami"""
         self.model = DragPredictor3D()
@@ -100,6 +123,7 @@ class CFDApp(QWidget):
             # Wczytanie siatki 3D
             stl_mesh = mesh.Mesh.from_file(filename)
             vertices = stl_mesh.vectors.reshape(-1, 3)
+            self.update_visualization()
 
             # Normalizacja wierzchołków
             vertices = (vertices - vertices.mean(axis=0)) / vertices.std()
@@ -135,7 +159,21 @@ class CFDApp(QWidget):
                 f"Nie można wczytać modelu:\n{str(e)}"
             )
             self.lbl_status.setText("Status: Błąd wczytywania")
-
+    def update_visualization(self):
+        if len(self.vertices) ==0:
+            return
+        colors = get_cmap('virdis')(
+            (self.drag - 0.1) / (2.0 - 0.1)
+        )
+        self.viewer.clear()
+        self.viewer.addItem(
+            gl.GLScatterPlotItem(
+                pos=self.vertices,
+                color=colors,
+                size=0.1,
+                pxMode=True
+            )
+        )
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
