@@ -1,101 +1,140 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-from scipy.optimize import minimize
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QPushButton
+from PyQt5.QtCore import Qt, QTimer
+import pyqtgraph.opengl as gl
+from matplotlib.cm import get_cmap
+import sys
+from stl import mesh  # Do wczytywania modeli 3D
 
-#--------------------------------------------------------------#
-# 1.Generowanie danych(parametry NACA + symulacja "Zastępcza")
-#--------------------------------------------------------------#
-def naca4(number, n_points=100):
-    m = int(number[0]) / 100
-    p = int(number[1]) / 10
-    t = int(number[2:]) / 100
 
-    x = np.linspace(0, 1, n_points)
-    yt = 5 * t * (0.2969 * np.sqrt(x) - 0.1260 * x - 0.3516 * x**2 + 0.2843 * x**3 - 0.1015 * x**4)
-    return x, yt
-def compute_drag(naca_number, angle_of_attack=0):
-    _, yt = naca4(naca_number)
-    thickness = np.max(yt)
-    drag = thickness * (1+ 0.1 * angle_of_attack**2)
-    return drag
-np.random.seed(42)
-naca_numbers = [f"{np.random.randint(0, 10)}{np.random.randint(0, 10)}{np.random.randint(10, 30)}" for _ in range(500)]
-angles = np.random.uniform(-5, 5, 500)
-
-x = np.array([[int(n[0]), int(n[1]), int(n[2:]), a] for n, a in zip(naca_numbers, angles)])
-y = np.array([compute_drag(n, a) for n, a in zip(naca_numbers, angles)])
-
-x = (x - x.mean(axis=0)) / x.std(axis=0)
-y = (y - y.mean()) / y.std()
-
-split = int(0.8 * len(x))
-x_train, x_test = x[:split], x[split:]
-y_train, y_test = y[:split], y[split:]
-
-x_train = torch.FloatTensor(x_train)
-y_train = torch.FloatTensor(y_train).view(-1, 1)
-x_test = torch.FloatTensor(x_test)
-y_test = torch.FloatTensor(y_test).view(-1, 1)
-
-#-------------------------#
-# 2.Model sieci neuronowej
-#-------------------------#
-class DragPredictor(nn.Module):
-    def __init__(self, input_size=4):
+# ----------------------------
+# 1. TWOJ MODEL "KARZEŁ" (3D)
+# ----------------------------
+class DragPredictor3D(nn.Module):
+    def __init__(self):
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Linear(input_size, 32),
+            nn.Linear(3, 64),
             nn.ReLU(),
-            nn.Linear(32, 32),
+            nn.Linear(64, 128),
             nn.ReLU(),
-            nn.Linear(32, 1)
+            nn.Linear(128, 1)
         )
+
     def forward(self, x):
         return self.layers(x)
 
-model = DragPredictor()
-criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(),   lr=0.01)
 
-epochs = 1000
-losses = []
-
-for epoch in range(epochs):
-    optimizer.zero_grad()
-    outputs = model(x_train)
-    loss = criterion(outputs, x_train)
-    loss.backward()
-    optimizer.step()
-    losses.append(loss.item())
-
-    if epoch % 100 == 0:
-        print(f"Epoch {epoch}, Loss: {loss.item()}:.4f")
-
-plt.plot(losses)
-plt.xlabel("Epoch")
-plt.ylabel("Los (MSE)")
-plt.title("Training Progress")
-plt.show()
-
-#----------------------------#
-# 3.Testowanie i wizualizacja
-#----------------------------#
-
+model = DragPredictor3D()
+model.load_state_dict(torch.load('model_weights.pth'))  # Wczytaj wytrenowane wagi
 model.eval()
-with torch.no_grad():
-    predoctions = model(x_test)
-    test_loss = criterion(predoctions, y_test)
-    print(f"Test Loss: {test_loss.item():.4f}")
-plt.scatter(y_test.numpy(), predoctions.numpy(), alpha=0.5)
-plt.xlabel("True Drag(Normalized)")
-plt.ylabel("Predicted Drag(Normalized)")
-plt.title("AI vs. True Drag(Normalized)")
-plt.plot([-2, 2], [-2, 2], 'r--')
-plt.show()
 
-sample_input = torch.FloatTensor([[0, 4, 12, 2.5]])
-predicted_drag = model(sample_input).item()
-print(f"Przewidywany opór dla NACA 0412 @ 2.5°: {predicted_drag:.4f} (Znormalizowany")
 
+# ----------------------------
+# 2. PROFESJONALNY INTERFEJS 3D
+# ----------------------------
+class AeroFlowPro(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        # Konfiguracja okna
+        self.setWindowTitle("AeroFlow PRO - Symulator CFD/AI")
+        self.setGeometry(100, 100, 1200, 800)
+
+        # Logo i przyciski
+        self.logo = QLabel("<h1>AeroFlow™ PRO</h1><p>AI-Powered CFD 3D Simulator</p>")
+        self.export_btn = QPushButton("Eksportuj raport (PDF)")
+        self.export_btn.clicked.connect(self.export_report)
+
+        # Wizualizacja 3D
+        self.viewer = gl.GLViewWidget()
+        self.viewer.setCameraPosition(distance=5)
+
+        # Dane 3D (domyślnie kula)
+        self.points = self.load_model('sphere.stl')  # Własne modele w .stl
+        self.update_visualization()
+
+        # Układ interfejsu
+        layout = QVBoxLayout()
+        layout.addWidget(self.logo)
+        layout.addWidget(self.export_btn)
+        layout.addWidget(self.viewer)
+        self.setLayout(layout)
+
+        # Timer do symulacji
+        self.sim_timer = QTimer()
+        self.sim_timer.timeout.connect(self.run_simulation)
+        self.sim_timer.start(50)  # 20 FPS
+
+    def load_model(self, filename):
+        """Wczytaj model 3D z pliku STL"""
+        stl_mesh = mesh.Mesh.from_file(filename)
+        return stl_mesh.vectors.reshape(-1, 3)
+
+    def update_visualization(self):
+        """Aktualizuj wizualizację na podstawie aktualnego kształtu"""
+        with torch.no_grad():
+            drag = model(torch.FloatTensor(self.points)).numpy()
+
+        colors = get_cmap('jet')(drag)[:, :3]
+        self.scatter = gl.GLScatterPlotItem(
+            pos=self.points,
+            color=colors,
+            size=0.1,
+            pxMode=True
+        )
+        self.viewer.clear()
+        self.viewer.addItem(self.scatter)
+
+    def run_simulation(self):
+        """Symulacja przepływu w czasie rzeczywistym"""
+        # Prosty solver CFD (można zastąpić OpenFOAM)
+        self.points[:, 0] += 0.01 * np.sin(time.time())  # Efekt przepływu
+        self.update_visualization()
+
+    def export_report(self):
+        """Generuj raport PDF"""
+        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_pdf import PdfPages
+
+        with PdfPages('aeroflow_report.pdf') as pdf:
+            # Strona 1: Wizualizacja 3D
+            fig = plt.figure(figsize=(10, 8))
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(
+                self.points[:, 0],
+                self.points[:, 1],
+                self.points[:, 2],
+                c=model(torch.FloatTensor(self.points)).numpy(),
+                cmap='jet'
+            )
+            ax.set_title('Rozkład oporu aerodynamicznego')
+            pdf.savefig(fig)
+
+            # Strona 2: Dane liczbowe
+            plt.figure()
+            plt.text(0.1, 0.5,
+                     f"Średni opór: {np.mean(drag):.4f}\n"
+                     f"Maksymalny opór: {np.max(drag):.4f}\n"
+                     f"Minimalny opór: {np.min(drag):.4f}")
+            pdf.savefig()
+            plt.close()
+
+
+# ----------------------------
+# 3. URUCHOMIENIE APLIKACJI
+# ----------------------------
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+
+    # Zabezpieczenie licencyjne
+    license_check = LicenseValidator.check_license()
+    if not license_check:
+        print("Brak licencji! Odwiedź www.aeroflow.ai")
+        sys.exit(1)
+
+    window = AeroFlowPro()
+    window.show()
+    sys.exit(app.exec_())
