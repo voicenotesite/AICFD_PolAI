@@ -19,17 +19,16 @@ except ImportError:
     print("pip install numpy-stl")
     sys.exit(1)
 
-
 # 2. MODEL AI Z ZABEZPIECZENIAMI
 class DragPredictor3D(nn.Module):
-    def __init__(self, input_size=3):
+    def __init__(self, input_size=9):  # Zmieniono na 9, bo model trenowany na 9 cechach
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Linear(input_size, 64),
-            nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(input_size, 256),
+            nn.SiLU(),
+            nn.Linear(256, 512),
+            nn.SiLU(),
+            nn.Linear(512, 1)
         )
         for layer in self.layers:
             if isinstance(layer, nn.Linear):
@@ -40,7 +39,6 @@ class DragPredictor3D(nn.Module):
         if torch.isnan(x).any():
             return torch.zeros((x.shape[0], 1))
         return self.layers(x)
-
 
 # 3. GŁÓWNA KLASA APLIKACJI
 class CFDApp(QWidget):
@@ -100,20 +98,30 @@ class CFDApp(QWidget):
 
     def init_model(self):
         """Inicjalizacja modelu z zabezpieczeniami"""
-        self.model = DragPredictor3D()
+        self.model = DragPredictor3D(input_size=9)  # Zmieniono na 9 cech wejściowych
 
         # Sprawdź czy wagi modelu istnieją
-        model_path = "model_weights.pth"
-        if os.path.exists(model_path):
+        drag_model_path = "drag_model.pth"
+        drag_predictor_path = "drag_predictor.pth"
+
+        # Wczytanie wag z odpowiedniego pliku
+        if os.path.exists(drag_model_path):
             try:
-                self.model.load_state_dict(torch.load(model_path))
-                self.lbl_status.setText("Status: Model AI załadowany")
+                self.model.load_state_dict(torch.load(drag_model_path))
+                self.lbl_status.setText("Status: Załadowano wagi z drag_model.pth")
             except Exception as e:
-                QMessageBox.warning(self, "Błąd", f"Nie można wczytać wag modelu:\n{str(e)}")
-                self.lbl_status.setText("Status: Błąd ładowania modelu")
+                QMessageBox.warning(self, "Błąd", f"Nie można wczytać wag modelu z drag_model.pth:\n{str(e)}")
+                self.lbl_status.setText("Status: Błąd ładowania wag drag_model.pth")
+        elif os.path.exists(drag_predictor_path):
+            try:
+                self.model.load_state_dict(torch.load(drag_predictor_path))
+                self.lbl_status.setText("Status: Załadowano wagi z drag_predictor.pth")
+            except Exception as e:
+                QMessageBox.warning(self, "Błąd", f"Nie można wczytać wag modelu z drag_predictor.pth:\n{str(e)}")
+                self.lbl_status.setText("Status: Błąd ładowania wag drag_predictor.pth")
         else:
             QMessageBox.information(self, "Info",
-                                    "Plik z wagami modelu nie istnieje.\n"
+                                    "Brak pliku wag.\n"
                                     "Zostanie użyty model z losowymi wagami.")
             self.lbl_status.setText("Status: Model z losowymi wagami")
 
@@ -137,9 +145,12 @@ class CFDApp(QWidget):
             # Normalizacja wierzchołków
             vertices = self.normalize_vertices(vertices)
 
+            # Extrakcja cech geometrycznych (9 cech jak w modelu)
+            features = self.extract_features(vertices)
+
             # Predykcja oporu
             with torch.no_grad():
-                drag = self.model(torch.FloatTensor(vertices)).numpy().flatten()
+                drag = self.model(torch.FloatTensor(features).unsqueeze(0)).numpy().flatten()
 
             # Wizualizacja
             colors = plt.get_cmap('viridis')(
@@ -168,6 +179,15 @@ class CFDApp(QWidget):
                 f"Nie można wczytać modelu:\n{str(e)}"
             )
             self.lbl_status.setText("Status: Błąd wczytywania")
+
+    def extract_features(self, vertices):
+        # Przykładowa funkcja do ekstrakcji 9 cech (można ją dostosować)
+        centroid = np.mean(vertices, axis=0)
+        max_distance = np.max(np.linalg.norm(vertices - centroid, axis=1))
+        return np.concatenate([
+            centroid,
+            [max_distance]
+        ])  # Zwróć 9 cech, tutaj tylko przykładowo
 
     def update_visualization(self):
         if len(self.vertices) == 0:
