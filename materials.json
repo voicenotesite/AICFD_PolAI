@@ -1,0 +1,163 @@
+{
+    "steel": {
+        "name": "steel",
+        "description": "Steel is an alloy of iron and carbon with improved strength and fracture resistance compared to other forms of iron. Because of its high tensile strength and low cost, steel is one of the most commonly manufactured materials in the world. Steel is used in buildings, as concrete reinforcing rods, in bridges, infrastructure, tools, ships, trains, cars, bicycles, machines, electrical appliances, furniture, and weapons.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/steel",
+        "density": 7850,
+        "viscosity": 0.0016
+    },
+    "aluminum": {
+        "name": "aluminum",
+        "description": "Aluminium is a chemical element; it has symbol Al and atomic number 13. It has a density lower than that of other common metals, about one-third that of steel. Aluminium has a great affinity towards oxygen, forming a protective layer of oxide on the surface when exposed to air. It visually resembles silver, both in its color and in its great ability to reflect light. It is soft, nonmagnetic, and ductile. It has one stable isotope, 27Al, which is highly abundant, making aluminium the 12th-most abundant element in the universe. The radioactivity of 26Al leads to it being used in radiometric dating.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/aluminum",
+        "density": 2700,
+        "viscosity": 0.0012
+    },
+    "copper": {
+        "name": "copper",
+        "description": "Copper is a chemical element; it has symbol Cu and atomic number 29. It is a soft, malleable, and ductile metal with very high thermal and electrical conductivity. A freshly exposed surface of pure copper has a pinkish-orange color. Copper is used as a conductor of heat and electricity, as a building material, and as a constituent of various metal alloys, such as sterling silver used in jewelry, cupronickel used to make marine hardware and coins, and constantan used in strain gauges and thermocouples for temperature measurement.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/copper",
+        "density": 8960,
+        "viscosity": 0.0017
+    },
+    "iron": {
+        "name": "iron",
+        "description": "Iron is a chemical element; it has symbol Fe and atomic number 26. It is a metal that belongs to the first transition series and group 8 of the periodic table. It is, by mass, the most common element on Earth, forming much of Earth's outer and inner core. It is the fourth most abundant element in the Earth's crust, being mainly deposited by meteorites in its metallic state.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/iron",
+        "density": 7874,
+        "viscosity": 0.0015
+    },
+    "titanium": {
+        "name": "titanium",
+        "description": "Titanium is a chemical element; it has symbol Ti and atomic number 22. Found in nature only as an oxide, it can be reduced to produce a lustrous transition metal with a silver color, low density, and high strength, resistant to corrosion in sea water, aqua regia, and chlorine.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/titanium",
+        "density": 4500,
+        "viscosity": 0.0013
+    },
+    "brass": {
+        "name": "brass",
+        "description": "Brass is an alloy of copper and zinc, in proportions which can be varied to achieve different colours and mechanical, electrical, acoustic and chemical properties, but copper typically has the larger proportion, generally 2⁄3 copper and 1⁄3 zinc. In use since prehistoric times, it is a substitutional alloy: atoms of the two constituents may replace each other within the same crystal structure.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/brass",
+        "density": 8500,
+        "viscosity": 0.0016
+    },
+    "bronze": {
+        "name": "bronze",
+        "description": "Bronze is an alloy consisting primarily of copper, commonly with about 12–12.5% tin and often with the addition of other metals and sometimes non-metals or metalloids. These additions produce a range of alloys some of which are harder than copper alone or have other useful properties, such as strength, ductility, or machinability.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/bronze",
+        "density": 8800,
+        "viscosity": 0.0017
+    },
+    "nickel": {
+        "name": "nickel",
+        "description": "Nickel is a chemical element; it has symbol Ni and atomic number 28. It is a silvery-white lustrous metal with a slight golden tinge. Nickel is a hard and ductile transition metal. Pure nickel is chemically reactive, but large pieces are slow to react with air under standard conditions because a passivation layer of nickel oxide forms on the surface that prevents further corrosion. Even so, pure native nickel is found in Earth's crust only in tiny amounts, usually in ultramafic rocks, and in the interiors of larger nickel–iron meteorites that were not exposed to oxygen when outside Earth's atmosphere.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/nickel",
+        "density": 8900,
+        "viscosity": 0.0017
+    },
+    "carbon": {
+        "name": "carbon",
+        "description": "Carbon is a chemical element; it has symbol C and atomic number 6. It is nonmetallic and tetravalent—meaning that its atoms are able to form up to four covalent bonds due to its valence shell exhibiting 4 electrons. It belongs to group 14 of the periodic table. Carbon makes up about 0.025 percent of Earth's crust. Three isotopes occur naturally, 12C and 13C being stable, while 14C is a radionuclide, decaying with a half-life of 5,700 years. Carbon is one of the few elements known since antiquity.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/carbon",
+        "density": 2267,
+        "viscosity": 0.0025
+    },
+    "graphite": {
+        "name": "graphite",
+        "description": "Graphite is a crystalline allotrope (form) of the element carbon. It consists of many stacked layers of graphene, typically in excess of hundreds of layers. Graphite occurs naturally and is the most stable form of carbon under standard conditions. Synthetic and natural graphite are consumed on a large scale for uses in many critical industries including refractories (50%), lithium-ion batteries (18%), foundries (10%), and lubricants (5%), among others (17%). Graphite converts to diamond under extremely high pressure and temperature. Graphite's low cost, thermal and chemical inertness and characteristic conductivity of heat and electricity finds numerous applications in high energy and high temperature processes.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/graphite",
+        "density": 2200,
+        "viscosity": 0.0024
+    },
+    "plastic": {
+        "name": "plastic",
+        "description": "Plastics are a wide range of synthetic or semisynthetic materials that use polymers as a main ingredient. Their plasticity makes it possible for plastics to be molded, extruded, or pressed into solid objects of various shapes. This adaptability, combined with a wide range of other properties, such as being lightweight, durable, flexible, nontoxic, and inexpensive to produce, has led to their widespread use around the world. Most plastics are derived from natural gas and petroleum, and a small fraction from renewable materials, with one such material being polylactic acid.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/plastic",
+        "density": 950,
+        "viscosity": 0.003
+    },
+    "polycarbonate": {
+        "name": "polycarbonate",
+        "description": "Polycarbonates (PC) are a group of thermoplastic polymers containing carbonate groups in their chemical structures. Polycarbonates used in engineering are strong, tough materials, and some grades are optically transparent. They are easily worked, molded, and thermoformed. Because of these properties, polycarbonates find many applications. Polycarbonates do not have a unique resin identification code (RIC) and are identified as \"Other\", 7 on the RIC list. Products made from polycarbonate can contain the precursor monomer bisphenol A (BPA).",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/polycarbonate",
+        "density": 1200,
+        "viscosity": 0.004
+    },
+    "polyethylene": {
+        "name": "polyethylene",
+        "description": "Polyethylene or polythene (abbreviated PE; IUPAC name polyethene or poly(methylene)) is the most commonly produced plastic. It is a polymer, primarily used for packaging (plastic bags, plastic films, geomembranes and containers including bottles, cups, jars, etc.). As of 2017, over 100 million tonnes of polyethylene resins are being produced annually, accounting for 34% of the total plastics market.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/polyethylene",
+        "density": 930,
+        "viscosity": 0.0035
+    },
+    "rubber": {
+        "name": "rubber",
+        "description": "Rubber, also called India rubber, latex, Amazonian rubber, caucho, or caoutchouc, as initially produced, consists of polymers of the organic compound isoprene, with minor impurities of other organic compounds.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/rubber",
+        "density": 1522,
+        "viscosity": 0.005
+    },
+    "glass": {
+        "name": "glass",
+        "description": "Glass is an amorphous (non-crystalline) solid. Because it is often transparent and chemically inert, glass has found widespread practical, technological, and decorative use in window panes, tableware, and optics. Some common objects made of glass are named after the material, e.g., a \"glass\" for drinking, \"glasses\" for vision correction, and a \"magnifying glass\".",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/glass",
+        "density": 2500,
+        "viscosity": 10
+    },
+    "water": {
+        "name": "water",
+        "description": "Water is an inorganic compound with the chemical formula H2O. It is a transparent, tasteless, odorless, and nearly colorless chemical substance. It is the main constituent of Earth's hydrosphere and the fluids of all known living organisms. It is vital for all known forms of life, despite not providing food energy or organic micronutrients. Its chemical formula, H2O, indicates that each of its molecules contains one oxygen and two hydrogen atoms, connected by covalent bonds. The hydrogen atoms are attached to the oxygen atom at an angle of 104.45°. In liquid form, H2O is also called \"water\" at standard temperature and pressure.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/water",
+        "density": 1000,
+        "viscosity": 0.001
+    },
+    "air": {
+        "name": "air",
+        "description": "The atmosphere of Earth is composed of a layer of gas mixture that surrounds the Earth's planetary surface, known collectively as air, with variable quantities of suspended aerosols and particulates, all retained by Earth's gravity. The atmosphere serves as a protective buffer between the Earth's surface and outer space, shields the surface from most meteoroids and ultraviolet solar radiation, keeps it warm and reduces diurnal temperature variation through heat retention, redistributes heat and moisture among different regions via air currents, and provides the chemical and climate conditions allowing life to exist and evolve on Earth.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/air",
+        "density": 1.225,
+        "viscosity": 1.81e-05
+    },
+    "gold": {
+        "name": "gold",
+        "description": "Gold is a chemical element; its chemical symbol is Au and atomic number 79. In its pure form, it is a bright, slightly orange-yellow, dense, soft, malleable, and ductile metal. Chemically, gold is a transition metal, a group 11 element, and one of the noble metals. It is one of the least reactive chemical elements, being the second-lowest in the reactivity series. It is solid under standard conditions.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/gold",
+        "density": 19300,
+        "viscosity": 0.0024
+    },
+    "silver": {
+        "name": "silver",
+        "description": "Silver is a chemical element; it has symbol Ag and atomic number 47. A soft, whitish-gray, lustrous transition metal, it exhibits the highest electrical conductivity, thermal conductivity, and reflectivity of any metal. Silver is found in the Earth's crust in the pure, free elemental form, as an alloy with gold and other metals, and in minerals such as argentite and chlorargyrite. Most silver is produced as a byproduct of copper, gold, lead, and zinc refining.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/silver",
+        "density": 10490,
+        "viscosity": 0.0019
+    },
+    "silicon": {
+        "name": "silicon",
+        "description": "Silicon is a chemical element; it has symbol Si and atomic number 14. It is a hard, brittle crystalline solid with a blue-grey metallic lustre, and is a tetravalent metalloid and semiconductor. It is a member of group 14 in the periodic table: carbon is above it; and germanium, tin, lead, and flerovium are below it. It is relatively unreactive. Silicon is a significant element that is essential for several physiological and metabolic processes in plants. Silicon is widely regarded as the predominant semiconductor material due to its versatile applications in various electrical devices such as transistors, solar cells, integrated circuits, and others. These may be due to its significant band gap, expansive optical transmission range, extensive absorption spectrum, surface roughening, and effective anti-reflection coating.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/silicon",
+        "density": 2329,
+        "viscosity": 0.003
+    },
+    "carbon_fiber": {
+        "name": "carbon_fiber",
+        "description": "Carbon fiber-reinforced polymers, carbon-fibre-reinforced polymers, carbon-fiber-reinforced plastics, carbon-fiber reinforced-thermoplastic, also known as carbon fiber, carbon composite, or just carbon, are extremely strong and light fiber-reinforced plastics that contain carbon fibers. CFRPs can be expensive to produce, but are commonly used wherever high strength-to-weight ratio and stiffness (rigidity) are required, such as aerospace, superstructures of ships, automotive, civil engineering, sports equipment, and an increasing number of consumer and technical applications.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/carbon_fiber",
+        "density": 1600,
+        "viscosity": 0.0025
+    },
+    "epoxy": {
+        "name": "epoxy",
+        "description": "Epoxy is the family of basic components or cured end products of epoxy resins. Epoxy resins, also known as polyepoxides, are a class of reactive prepolymers and polymers which contain epoxide groups. The epoxide functional group is also collectively called epoxy. The IUPAC name for an epoxide group is an oxirane.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/epoxy",
+        "density": 1200,
+        "viscosity": 10
+    },
+    "wood": {
+        "name": "wood",
+        "description": "Wood is a structural tissue/material found as xylem in the stems and roots of trees and other woody plants. It is an organic material – a natural composite of cellulosic fibers that are strong in tension and embedded in a matrix of lignin that resists compression. Wood is sometimes defined as only the secondary xylem in the stems of trees, or more broadly to include the same type of tissue elsewhere, such as in the roots of trees or shrubs. In a living tree, it performs a mechanical-support function, enabling woody plants to grow large or to stand up by themselves. It also conveys water and nutrients among the leaves, other growing tissues, and the roots. Wood may also refer to other plant materials with comparable properties, and to material engineered from wood, woodchips, or fibers.",
+        "source": "https://en.wikipedia.org/api/rest_v1/page/summary/wood",
+        "density": 600,
+        "viscosity": 0.002
+    }
+}
