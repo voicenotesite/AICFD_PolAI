@@ -1,8 +1,9 @@
-import sys
-import numpy as np
+import hashlib
+import json
+import os
 import torch
 import torch.nn as nn
-import json
+import numpy as np
 from PyQt5.QtWidgets import (
     QApplication, QVBoxLayout, QWidget, QLabel,
     QPushButton, QFileDialog, QMessageBox, QTextEdit, QComboBox
@@ -10,7 +11,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 import pyqtgraph.opengl as gl
-import os
 from stl import mesh
 
 
@@ -19,13 +19,15 @@ class EnhancedDragPredictor(nn.Module):
     def __init__(self, input_size=9):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(input_size, 256),  # Zwiększenie liczby neuronów w pierwszej warstwie
             nn.LeakyReLU(0.1),
-            nn.LayerNorm(128),
-            nn.Linear(128, 256),
+            nn.LayerNorm(256),
+            nn.Linear(256, 512),  # Zwiększenie liczby neuronów w drugiej warstwie
             nn.LeakyReLU(0.1),
-            nn.Dropout(0.1),
-            nn.Linear(256, 1)
+            nn.Dropout(0.2),
+            nn.Linear(512, 1024),  # Kolejna warstwa dla lepszego dopasowania
+            nn.LeakyReLU(0.1),
+            nn.Linear(1024, 1)
         )
         self._init_weights()
 
@@ -47,12 +49,15 @@ class CFDApp(QWidget):
         super().__init__()
         self.vertices = np.zeros((0, 3))
         self.drag_coeff = 0.0
-        self.selected_material = "stal"
+        self.selected_material = "steel"
 
-        self.init_ui()  # <- najpierw GUI, żeby istniał log_output
-        self.materials = self.load_materials()
-        self.material_selector.addItems(self.materials.keys())  # <- dodajemy dopiero teraz
-        self.init_model()
+        self.init_ui()  # Inicjalizowanie UI
+        self.materials = self.load_materials()  # Wczytanie materiałów
+        self.material_selector.addItems(self.materials.keys())  # Wybór materiału
+        self.init_model()  # Inicjalizacja modelu (dodajemy tę metodę)
+
+        # Wczytanie cache wyników obliczeń
+        self.results_cache = self.load_results_cache()
 
     def init_ui(self):
         self.setWindowTitle("AICFD Pro v4.0")
@@ -120,9 +125,72 @@ class CFDApp(QWidget):
         self.selected_material = material
         self.log_message(f"🔹 Wybrano materiał: {material}")
 
-        # Jeśli plik STL już jest wczytany, przelicz Cd
         if self.vertices.size > 0:
             self.recalculate_cd()
+
+    def load_results_cache(self):
+        cache_file = "results_cache.json"
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                self.log_message(f"❌ Błąd ładowania wyników z pamięci podręcznej: {e}")
+        return {}
+
+    def save_results_cache(self):
+        cache_file = "results_cache.json"
+        try:
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(self.results_cache, f, indent=4)
+        except Exception as e:
+            self.log_message(f"❌ Błąd zapisywania wyników do pamięci podręcznej: {e}")
+
+    def calculate_hash(self, filename):
+        """Oblicz hash pliku STL, aby unikalnie identyfikować plik."""
+        hash_sha256 = hashlib.sha256()
+        try:
+            with open(filename, "rb") as f:
+                while chunk := f.read(8192):
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
+        except Exception as e:
+            self.log_message(f"❌ Błąd obliczania hasha pliku STL: {e}")
+            return None
+
+    def recalculate_cd(self):
+        file_hash = self.calculate_hash(self.current_file)
+
+        # Sprawdzanie cache
+        if file_hash in self.results_cache:
+            self.drag_coeff = self.results_cache[file_hash]
+            self.log_message(f"✅ Użyto zapisanej wartości Cd: {self.drag_coeff:.4f}")
+            self.lbl_status.setText(f"🟢 Cd: {self.drag_coeff:.4f}")
+            return
+
+        material_data = self.materials.get(self.selected_material, {})
+        features = self.extract_features(self.vertices)
+        input_tensor = torch.FloatTensor(features).unsqueeze(0)
+
+        # Użyj danych materiału do przewidywania Cd
+        input_tensor = self.add_material_data_to_features(input_tensor, material_data)
+
+        with torch.no_grad():
+            self.drag_coeff = self.model(input_tensor).item()
+
+        self.drag_coeff = validate_cd(self.drag_coeff)
+
+        if self.drag_coeff >= 0.1 and self.drag_coeff <= 2.0:
+            self.lbl_status.setText(f"🟢 Cd: {self.drag_coeff:.4f}")
+            self.log_message(f"✅ Cd: {self.drag_coeff:.4f}")
+        else:
+            self.lbl_status.setText("🔴 Cd: Wynik nierealistyczny!")
+            self.log_message("❌ Błąd: Nierealistyczny wynik Cd.")
+
+        # Zapisz wynik w cache
+        if file_hash:
+            self.results_cache[file_hash] = self.drag_coeff
+            self.save_results_cache()
 
     def load_model(self):
         try:
@@ -144,6 +212,9 @@ class CFDApp(QWidget):
             self.vertices = vertices
             self.update_visualization_mesh(stl_mesh)
 
+            # Zapisywanie ścieżki pliku
+            self.current_file = filename
+
             # Po załadowaniu pliku STL przelicz Cd
             self.recalculate_cd()
 
@@ -151,79 +222,25 @@ class CFDApp(QWidget):
             self.log_message(f"❌ Błąd: {e}")
             QMessageBox.critical(self, "Błąd", f"Nie można wczytać pliku:\n{e}")
 
-    def recalculate_cd(self):
-        material_data = self.materials.get(self.selected_material, {})
-        features = self.extract_features(self.vertices)
-        input_tensor = torch.FloatTensor(features).unsqueeze(0)
-
-        # Użyj danych materiału do przewidywania Cd
-        input_tensor = self.add_material_data_to_features(input_tensor, material_data)
-
-        with torch.no_grad():
-            self.drag_coeff = self.model(input_tensor).item()
-            self.drag_coeff = max(0.1, min(self.drag_coeff, 2.0))
-
-        self.lbl_status.setText(f"🟢 Cd: {self.drag_coeff:.4f}")
-        self.log_message(f"✅ Cd: {self.drag_coeff:.4f}")
-
-    def add_material_data_to_features(self, input_tensor, material_data):
-        # Dodaj dane materiału do cech (np. gęstość, lepkość, itd.)
-        material_features = np.array([material_data.get("density", 1000), material_data.get("viscosity", 0.001)],
-                                     dtype=np.float32)
-        return torch.cat((input_tensor, torch.FloatTensor(material_features).unsqueeze(0)), dim=1)
+    def init_model(self):
+        """ Inicjalizowanie modelu AI do przewidywania Cd """
+        self.model = EnhancedDragPredictor(input_size=9)  # Tworzenie instancji modelu AI
+        self.model.eval()  # Ustawienie modelu w tryb ewaluacji (nie trenujemy modelu)
 
     def update_visualization_mesh(self, stl_mesh):
-        self.viewer.clear()
-        faces = stl_mesh.vectors
-        mesh_data = gl.MeshData(vertexes=faces.reshape(-1, 3), faces=np.arange(len(faces) * 3).reshape(-1, 3))
-        mesh_item = gl.GLMeshItem(meshdata=mesh_data, smooth=False, drawEdges=True, edgeColor=(1, 1, 1, 1),
-                                  color=(0.5, 0.5, 1, 0.7))
+        """Metoda aktualizująca wizualizację modelu 3D w PyQt"""
+        # Zbieramy dane wierzchołków i trójkątów z pliku STL
+        vertices = stl_mesh.vectors.reshape(-1, 3)
+        faces = np.array([[i, i + 1, i + 2] for i in range(0, len(vertices), 3)])
+
+        # Stworzenie obiektu 3D
+        mesh_item = gl.GLMeshItem(vertexes=vertices, faces=faces, color=(0.8, 0.8, 0.8, 1.0), shader="phong")
         self.viewer.addItem(mesh_item)
 
-    def extract_features(self, vertices):
-        center = np.mean(vertices, axis=0)
-        centered = vertices - center
-        max_dims = np.max(centered, axis=0)
-        min_dims = np.min(centered, axis=0)
-        bbox = max_dims - min_dims
-        volume = np.abs(np.prod(bbox))
-        surface_area = np.linalg.norm(np.cross(centered[1] - centered[0], centered[2] - centered[0]))
-        aspect_ratio = bbox[0] / (bbox[1] + 1e-6)
-        return np.array([
-            np.mean(vertices[:, 0]),
-            np.mean(vertices[:, 1]),
-            np.mean(vertices[:, 2]),
-            np.max(vertices[:, 0]) - np.min(vertices[:, 0]),
-            np.max(vertices[:, 1]) - np.min(vertices[:, 1]),
-            np.max(vertices[:, 2]) - np.min(vertices[:, 2]),
-            volume,
-            surface_area,
-            aspect_ratio
-        ], dtype=np.float32)
 
-    def init_model(self):
-        self.model = EnhancedDragPredictor(input_size=9 + 2)  # Dodatkowe dane materiału
-        weights_path = "drag_model.pth"
-        if os.path.exists(weights_path):
-            try:
-                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-                state_dict = torch.load(weights_path, map_location=device)
-                new_state_dict = {k[4:] if k.startswith('net.') else k: v for k, v in state_dict.items()}
-                self.model.load_state_dict(new_state_dict, strict=False)
-                self.model.eval()
-                self.log_message("✅ Model AI załadowany pomyślnie")
-                self.lbl_status.setText("🟢 Status: Model gotowy")
-            except Exception as e:
-                self.log_message(f"❌ Błąd ładowania wag: {e}")
-                self.lbl_status.setText("🔴 Status: Błąd modelu")
-        else:
-            self.log_message("⚠️ Używany model z domyślnymi wagami")
-            self.lbl_status.setText("🟡 Status: Model domyślny")
-
-
+# === Uruchomienie aplikacji ===
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle("Fusion")
-    window = CFDApp()
-    window.show()
-    sys.exit(app.exec_())
+    app = QApplication([])  # Tworzymy aplikację Qt
+    window = CFDApp()  # Tworzymy główne okno aplikacji
+    window.show()  # Wyświetlamy okno aplikacji
+    app.exec_()
